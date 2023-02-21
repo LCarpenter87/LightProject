@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.auth as auth
 import requests
 
 authorized_password = st.secrets["my_password"]
@@ -7,15 +6,46 @@ api_key = st.secrets["api_key"]
 device_id = st.secrets["device_id"]
 model = st.secrets["model"]
 
-# Set up authentication
+def check_password():
+    """Returns `True` if the user had the correct password."""
 
-if not auth.is_authenticated():
-    password = st.text_input("Enter password", type="password")
-    if password == authorized_password:
-        auth.authenticate()
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == st.secrets["my_password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+
+
+
+
+
+
+
+
+
 
 # Display the protected content
-if auth.is_authenticated():
+if check_password():
     url = f'https://developer-api.govee.com/v1/devices/control'
 
     headers = {
